@@ -15,17 +15,28 @@ var (
 	// ErrorMethodNotSupported Not supported method
 	ErrorMethodNotAllowed = errors.New("method not supported")
 
-	// ErrorMethodNotSupported Bad request
+	// ErrorBadRequest Bad request
 	ErrorBadRequest = errors.New("bad request")
+
+	// ErrorNotFound Not found
+	ErrorNotFound = errors.New("not found")
 )
 
 type ErrorBody struct {
 	ErrorMsg *string `json:"error,omitempty"`
 }
 
-// func GetUser(request events.APIGatewayProxyRequest, dynamodbClient dynamodb.Client, tableName string) *events.APIGatewayProxyResponse {
-// 	fetchedUser := user.FetchUser()
-// }
+func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// Extract users's email from the request.
+	emailUser := request.QueryStringParameters["email"]
+
+	// Fetch user data from DynamoDB. If err return not found.
+	userData, err := user.FetchUser(emailUser)
+	if err != nil {
+		return buildAPIResponse(http.StatusNotFound, ErrorNotFound)
+	}
+	return buildAPIResponse(http.StatusOK, userData)
+}
 
 // CreateUser extracts user data from the request and passes to the user.CreateUser function that creates the user in the DynamoDB table.
 // It also returns the response to the caller.
@@ -40,7 +51,8 @@ func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	log.Printf("========== User ==========: %v", userData)
 
 	// Create user.
-	if err := user.CreateUser(userData); err != nil {
+	err = user.CreateUser(userData)
+	if err != nil {
 		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
 	}
 
