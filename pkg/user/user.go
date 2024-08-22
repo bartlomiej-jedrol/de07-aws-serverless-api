@@ -3,6 +3,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log"
 	"strconv"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	validator "github.com/go-playground/validator/v10"
 )
 
@@ -29,19 +31,34 @@ type TableBasics struct {
 var (
 	userTable = TableBasics{TableName: "de07-user"}
 	validate  *validator.Validate
+
+	// ErrorFailedToLoadAWSConfig Failed to load AWS config.
+	ErrorFailedToLoadAWSConfig = errors.New("failed to load AWS config")
+
+	// FailedToCreateDynamoDBClient Failed to create DynamoDB client.
+	ErrorFailedToCreateDynamoDBClient = errors.New("failed to create DynamoDB client")
+
+	//ErrorFailedToGetItem Failed to get item.
+	ErrorFailedToGetItem = errors.New("failed to get item (user data) from the DynamoDB API")
+
+	// ErrorFailedToUnmarshalMap Failed to unmarshal map.
+	ErrorFailedToUnmarshalMap = errors.New("failed to unmarshal map for item get from the DynamoDB table, item")
+
+	// ErrorFailedToValidateUser Failed to validate user.
+	ErrorFailedToValidateUser = errors.New("failed to validate the user")
 )
 
 func init() {
 	// Load AWS config (~/.aws/config).
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatalf("Failed to load AWS config: %v", err)
+		log.Fatalf("%v: %v", ErrorFailedToLoadAWSConfig, err)
 	}
 
 	// Create DynamoDB client.
 	userTable.DynamoDbClient = dynamodb.NewFromConfig(cfg)
 	if userTable.DynamoDbClient == nil {
-		log.Fatalf("Failed to create DynamoDB client: %v", err)
+		log.Fatalf("%v: %v", ErrorFailedToCreateDynamoDBClient, err)
 	}
 
 	// Create validator of User struct.
@@ -57,7 +74,7 @@ func FetchUser(email string) (*User, error) {
 	response, err := userTable.DynamoDbClient.GetItem(context.TODO(), input)
 	log.Printf("========== response ==========: %v", response)
 	if err != nil {
-		log.Printf("Failed to get item (user data) from the DynamoDB API. Error: %v", err)
+		log.Printf("%v: %v", ErrorFailedToGetItem, err)
 		return nil, err
 	}
 
@@ -65,14 +82,14 @@ func FetchUser(email string) (*User, error) {
 	var user User
 	err = attributevalue.UnmarshalMap(response.Item, &user)
 	if err != nil {
-		log.Printf("Failed to unmarshal map for item get from the DynamoDB table: %v. Error: %v", response.Item, err)
+		log.Printf("%v: %v, %v", ErrorFailedToUnmarshalMap, response.Item, err)
 	}
 	log.Printf("========== user ==========: %v", user)
 
 	// Validate the user struct.
 	err = validate.Struct(user)
 	if err != nil {
-		log.Printf("Failed to validate the user: %v. Error: %v", user, err)
+		log.Printf("%v: %v, %v", ErrorFailedToValidateUser, user, err)
 		return nil, err
 	}
 	return &user, nil
@@ -82,7 +99,7 @@ func FetchUsers() {
 
 }
 
-// CreateUser creates user in DynamoDB table. I returns error in case of failure.
+// CreateUser creates user in DynamoDB table. It returns error in case of failure.
 func CreateUser(user User) error {
 	// Prepare user item with all attributes.
 	item := map[string]types.AttributeValue{
@@ -107,9 +124,38 @@ func CreateUser(user User) error {
 	return nil
 }
 
-func UpdateUser() {
+// UpdateUser updates existing user in DynamoDB table. It returns error in case of failure.
+func UpdateUser(user User) error {
+	// userEmail := user.Email
+	// var response *dynamodb.UpdateItemOutput
+	// var attributeMap map[string]map[string]interface{}
+
+	// Prepare update expression for DynamoDB item update.
+	update := expression.Set(expression.Name("firstName"), expression.Value(user.FirstName))
+	update.Set(expression.Name("lastName"), expression.Value(user.LastName))
+	update.Set(expression.Name("age"), expression.Value(user.Age))
+	expr, err := expression.NewBuilder().WithUpdate(update).Build()
+	if err != nil {
+		log.Printf("Failed to build an expression for an update of the user: %v", err)
+	} else {
+		// Make the item update.
+		// response, err := userTable.DynamoDbClient.UpdateItem(context.TODO(),
+		// 	&dynamodb.UpdateItemInput{
+		// 		TableName:                 aws.String(userTable.TableName),
+		// 		Key:                       GetKey(user),
+		// 		ExpressionAttributeNames:  expr.Names(),
+		// 		ExpressionAttributeValues: expr.Values(),
+		// 		UpdateExpression:          expr.Update(),
+		// 	})
+	}
+	return nil
 }
 
 func DeleteUser() {
 
+}
+
+// GetKey returns key of a user in a required format.
+func GetKey(user User) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: user.Email}}
 }

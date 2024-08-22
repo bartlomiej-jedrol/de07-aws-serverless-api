@@ -21,8 +21,8 @@ func HandleRequest(request events.APIGatewayProxyRequest) (*events.APIGatewayPro
 		return handlers.GetUser(request)
 	case "POST":
 		return handlers.CreateUser(request)
-	// case "PUT":
-	// 	return handlers.UpdateUser(request, tableName)
+	case "PUT":
+		return handlers.UpdateUser(request)
 	// case "DELETE":
 	// 	return handlers.DeleteUser(request, tableName)
 	default:

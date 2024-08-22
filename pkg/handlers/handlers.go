@@ -26,6 +26,8 @@ type ErrorBody struct {
 	ErrorMsg *string `json:"error,omitempty"`
 }
 
+// GetUser gets the user data from the DynamoDB table.
+// It also returns the response to the caller.
 func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Extract users's email from the request.
 	emailUser := request.QueryStringParameters["email"]
@@ -38,7 +40,7 @@ func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 	return buildAPIResponse(http.StatusOK, userData)
 }
 
-// CreateUser extracts user data from the request and passes to the user.CreateUser function that creates the user in the DynamoDB table.
+// CreateUser extracts user data from the request and creates the user in the DynamoDB table.
 // It also returns the response to the caller.
 func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
@@ -60,8 +62,15 @@ func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	return buildAPIResponse(http.StatusCreated, userData)
 }
 
-func UpdateUser() {
-
+func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	var userData user.User
+	userJSON := request.Body
+	err := json.Unmarshal([]byte(userJSON), &userData)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal userJSON: %v", err)
+	}
+	user.UpdateUser(userData)
+	return buildAPIResponse(http.StatusOK, userData)
 }
 
 func DeleteUser() {
