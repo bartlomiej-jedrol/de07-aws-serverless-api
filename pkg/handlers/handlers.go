@@ -30,10 +30,10 @@ type ErrorBody struct {
 // It also returns the response to the caller.
 func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Extract users's email from the request.
-	emailUser := request.QueryStringParameters["email"]
+	email := request.QueryStringParameters["email"]
 
 	// Fetch user data from DynamoDB. If err return not found.
-	userData, err := user.FetchUser(emailUser)
+	userData, err := user.FetchUser(email)
 	if err != nil {
 		return buildAPIResponse(http.StatusNotFound, ErrorNotFound)
 	}
@@ -48,7 +48,7 @@ func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	var userData user.User
 	err := json.Unmarshal([]byte(userJSON), &userData)
 	if err != nil {
-		log.Fatalf("Failed to unmarshal userJSON: %v", err)
+		log.Printf("Failed to unmarshal userJSON: %v", err)
 	}
 	log.Printf("========== User ==========: %v", userData)
 
@@ -67,7 +67,7 @@ func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	userJSON := request.Body
 	err := json.Unmarshal([]byte(userJSON), &userData)
 	if err != nil {
-		log.Fatalf("Failed to unmarshal userJSON: %v", err)
+		log.Printf("Failed to unmarshal userJSON: %v", err)
 	}
 	user.UpdateUser(userData)
 	return buildAPIResponse(http.StatusOK, userData)

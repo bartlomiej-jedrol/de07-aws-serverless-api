@@ -16,11 +16,11 @@ push: build
 
 logs:
 	echo $(START_TIME)
-	@sleep 2
+	@sleep 5
 	aws logs filter-log-events \
 	--log-group-name $(AWS_LAMBDA_LOG_GROUP) \
 	--start-time $(START_TIME) \
-	--limit 50 \
+	--limit 10000 \
 	--color auto \
 	--output text
 
@@ -37,7 +37,7 @@ get_all:
 	curl --header "Content-Type: application/json" --request GET https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev
 
 put:
-	curl --header "Content-Type: application/json" --request PUT --data '{"email": "bartlomiej.jedrol@gmail.com", "firstName": "BartlomiejUpdated", "lastName": "JedrolUpdated", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
+	curl --header "Content-Type: application/json" --request PUT --data '{"email": "bartlomiej.jedrol@gmail.com", "firstName": "BartlomiejUpdated4", "lastName": "JedrolUpdated4", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
 
 delete:
 	curl --header "Content-Type: application/json" --request DELETE https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com

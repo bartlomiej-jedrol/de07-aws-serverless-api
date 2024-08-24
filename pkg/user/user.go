@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	validator "github.com/go-playground/validator/v10"
 )
 
@@ -28,6 +27,12 @@ type TableBasics struct {
 	TableName      string
 }
 
+type MyItem struct {
+	ID    string `dynamodbav:"id"`
+	Name  string `dynamodbav:"name"`
+	Value string `dynamodbav:"value"`
+}
+
 var (
 	userTable = TableBasics{TableName: "de07-user"}
 	validate  *validator.Validate
@@ -39,13 +44,16 @@ var (
 	ErrorFailedToCreateDynamoDBClient = errors.New("failed to create DynamoDB client")
 
 	//ErrorFailedToGetItem Failed to get item.
-	ErrorFailedToGetItem = errors.New("failed to get item (user data) from the DynamoDB API")
+	ErrorFailedToGetItem = errors.New("failed to get item (user data) from the DynamoDB")
 
 	// ErrorFailedToUnmarshalMap Failed to unmarshal map.
-	ErrorFailedToUnmarshalMap = errors.New("failed to unmarshal map for item get from the DynamoDB table, item")
+	ErrorFailedToUnmarshalMap = errors.New("failed to unmarshal map for item get from the DynamoDB, item")
 
 	// ErrorFailedToValidateUser Failed to validate user.
 	ErrorFailedToValidateUser = errors.New("failed to validate the user")
+
+	// ErrorFailedToPutItem Failed to put item.
+	ErrorFailedToPutItem = errors.New("failed to put item to the DynamoDB")
 )
 
 func init() {
@@ -68,10 +76,10 @@ func init() {
 func FetchUser(email string) (*User, error) {
 	// Build input with key (user's email) of the item to be fetched from the DynamoDB table.
 	key := map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}}
-	input := &dynamodb.GetItemInput{Key: key, TableName: &userTable.TableName}
+	input := dynamodb.GetItemInput{Key: key, TableName: aws.String(userTable.TableName)}
 
 	// Get user data from the DynamoDB table. If err return to the caller.
-	response, err := userTable.DynamoDbClient.GetItem(context.TODO(), input)
+	response, err := userTable.DynamoDbClient.GetItem(context.TODO(), &input)
 	log.Printf("========== response ==========: %v", response)
 	if err != nil {
 		log.Printf("%v: %v", ErrorFailedToGetItem, err)
@@ -110,43 +118,42 @@ func CreateUser(user User) error {
 	}
 	log.Printf("========== item ==========: %v", item)
 
+	// Prepare input for the PutItem method.
 	input := dynamodb.PutItemInput{
-		Item:      item,
-		TableName: aws.String(userTable.TableName)}
+		Item:         item,
+		TableName:    aws.String(userTable.TableName),
+		ReturnValues: "ALL_OLD",
+	}
 	log.Printf("========== input ==========: %v", input)
 
 	// Put item into DynamoDB table.
 	_, err := userTable.DynamoDbClient.PutItem(context.TODO(), &input)
 	if err != nil {
-		log.Printf("Failed to put item to the DynamoDb table: %v", err)
+		log.Printf("%v: %v", ErrorFailedToPutItem, err)
 		return err
 	}
+
+	// Logging methods.
+	// log.Printf("========== item ==========: %v", item["email"].(*types.AttributeValueMemberS).Value)
+
+	// var responseUser User
+	// err = attributevalue.UnmarshalMap(r.Attributes, &responseUser)
+	// if err != nil {
+	// 	log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
+	// }
+	// log.Printf("========== responseAttributes ==========: %v", responseUser)
+
 	return nil
 }
 
 // UpdateUser updates existing user in DynamoDB table. It returns error in case of failure.
 func UpdateUser(user User) error {
-	// userEmail := user.Email
-	// var response *dynamodb.UpdateItemOutput
-	// var attributeMap map[string]map[string]interface{}
-
-	// Prepare update expression for DynamoDB item update.
-	update := expression.Set(expression.Name("firstName"), expression.Value(user.FirstName))
-	update.Set(expression.Name("lastName"), expression.Value(user.LastName))
-	update.Set(expression.Name("age"), expression.Value(user.Age))
-	expr, err := expression.NewBuilder().WithUpdate(update).Build()
-	if err != nil {
-		log.Printf("Failed to build an expression for an update of the user: %v", err)
-	} else {
-		// Make the item update.
-		// response, err := userTable.DynamoDbClient.UpdateItem(context.TODO(),
-		// 	&dynamodb.UpdateItemInput{
-		// 		TableName:                 aws.String(userTable.TableName),
-		// 		Key:                       GetKey(user),
-		// 		ExpressionAttributeNames:  expr.Names(),
-		// 		ExpressionAttributeValues: expr.Values(),
-		// 		UpdateExpression:          expr.Update(),
-		// 	})
+	u, _ := FetchUser(user.Email)
+	if u != nil {
+		err := CreateUser(user)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
