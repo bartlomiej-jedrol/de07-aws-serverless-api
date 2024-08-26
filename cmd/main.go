@@ -23,8 +23,8 @@ func HandleRequest(request events.APIGatewayProxyRequest) (*events.APIGatewayPro
 		return handlers.CreateUser(request)
 	case "PUT":
 		return handlers.UpdateUser(request)
-	// case "DELETE":
-	// 	return handlers.DeleteUser(request, tableName)
+	case "DELETE":
+		return handlers.DeleteUser(request)
 	default:
 		return handlers.UnhandledHTTPMethod(request)
 	}

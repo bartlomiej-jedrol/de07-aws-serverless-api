@@ -27,12 +27,6 @@ type TableBasics struct {
 	TableName      string
 }
 
-type MyItem struct {
-	ID    string `dynamodbav:"id"`
-	Name  string `dynamodbav:"name"`
-	Value string `dynamodbav:"value"`
-}
-
 var (
 	userTable = TableBasics{TableName: "de07-user"}
 	validate  *validator.Validate
@@ -91,6 +85,7 @@ func FetchUser(email string) (*User, error) {
 	err = attributevalue.UnmarshalMap(response.Item, &user)
 	if err != nil {
 		log.Printf("%v: %v, %v", ErrorFailedToUnmarshalMap, response.Item, err)
+		return nil, err
 	}
 	log.Printf("========== user ==========: %v", user)
 
@@ -103,8 +98,7 @@ func FetchUser(email string) (*User, error) {
 	return &user, nil
 }
 
-func FetchUsers() {
-
+func FetchUsers(user User) {
 }
 
 // CreateUser creates user in DynamoDB table. It returns error in case of failure.
@@ -134,14 +128,24 @@ func CreateUser(user User) error {
 	}
 
 	// Logging methods.
-	// log.Printf("========== item ==========: %v", item["email"].(*types.AttributeValueMemberS).Value)
-
+	// Unmarshaling an entire map.
 	// var responseUser User
 	// err = attributevalue.UnmarshalMap(r.Attributes, &responseUser)
 	// if err != nil {
 	// 	log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
 	// }
 	// log.Printf("========== responseAttributes ==========: %v", responseUser)
+
+	// Unmarshaling a single attribute.
+	// var userEmail string
+	// err = attributevalue.Unmarshal(item["email"], &userEmail)
+	// if err != nil {
+	// 	log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
+	// }
+	// log.Printf("========== unmarshal ==========: %v", userEmail)
+
+	// // Printing value of a single attribute.
+	// log.Printf("========== item ==========: %v", item["email"].(*types.AttributeValueMemberS).Value)
 
 	return nil
 }

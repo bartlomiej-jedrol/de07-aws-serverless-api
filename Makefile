@@ -25,7 +25,7 @@ logs:
 	--output text
 
 post:
-	curl --header "Content-Type: application/json" --request POST --data '{"email": "bartlomiej.jedrol@gmail.com", "firstName": "Bartlomiej", "lastName": "Jedrol", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev
+	curl --header "Content-Type: application/json" --request POST --data '{"email": "jedrol.natalia@gmail.com", "firstName": "Natalia", "lastName": "Jedrol", "age": 33}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev
 
 get:
 	curl --header "Content-Type: application/json" --request GET https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com

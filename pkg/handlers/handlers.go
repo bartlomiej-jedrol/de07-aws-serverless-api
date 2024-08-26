@@ -20,10 +20,25 @@ var (
 
 	// ErrorNotFound Not found
 	ErrorNotFound = errors.New("not found")
+
+	// ErrorFailedToUnmarshalJSON Failed to unmarshal JSON
+	ErrorFailedToUnmarshalJSON = errors.New("failed to unmarshal JSON")
 )
 
 type ErrorBody struct {
 	ErrorMsg *string `json:"error,omitempty"`
+}
+
+func unmarshalUser(request events.APIGatewayProxyRequest) *user.User {
+	var userData user.User
+	err := json.Unmarshal([]byte(request.Body), &userData)
+	if err != nil {
+		log.Printf("%v: %v", ErrorFailedToUnmarshalJSON, err)
+		return nil
+	}
+	log.Printf("========== User ==========: %v", userData)
+
+	return &userData
 }
 
 // GetUser gets the user data from the DynamoDB table.
@@ -37,6 +52,8 @@ func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 	if err != nil {
 		return buildAPIResponse(http.StatusNotFound, ErrorNotFound)
 	}
+
+	// Send successful response.
 	return buildAPIResponse(http.StatusOK, userData)
 }
 
@@ -44,37 +61,42 @@ func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 // It also returns the response to the caller.
 func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
-	userJSON := request.Body
-	var userData user.User
-	err := json.Unmarshal([]byte(userJSON), &userData)
-	if err != nil {
-		log.Printf("Failed to unmarshal userJSON: %v", err)
+	userData := unmarshalUser(request)
+	if userData == nil {
+		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
 	}
-	log.Printf("========== User ==========: %v", userData)
 
 	// Create user.
-	err = user.CreateUser(userData)
+	err := user.CreateUser(*userData)
 	if err != nil {
 		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
 	}
 
-	// Send response for successful user creation.
+	// Send successful response.
 	return buildAPIResponse(http.StatusCreated, userData)
 }
 
 func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	var userData user.User
-	userJSON := request.Body
-	err := json.Unmarshal([]byte(userJSON), &userData)
-	if err != nil {
-		log.Printf("Failed to unmarshal userJSON: %v", err)
+	// Unmarshal received user JSON data.
+	userData := unmarshalUser(request)
+	if userData == nil {
+		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
 	}
-	user.UpdateUser(userData)
+
+	// Update user.
+	err := user.UpdateUser(*userData)
+	if err != nil {
+		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
+	}
+
+	// Send successful response.
 	return buildAPIResponse(http.StatusOK, userData)
 }
 
-func DeleteUser() {
-
+func DeleteUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// Unmarshal received user JSON data.
+	testUser := user.User{FirstName: "Bartek"}
+	return buildAPIResponse(http.StatusOK, testUser)
 }
 
 func UnhandledHTTPMethod(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
