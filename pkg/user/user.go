@@ -4,6 +4,7 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -96,18 +97,24 @@ func FetchUser(email string) (*User, error) {
 	}
 
 	// Extract user data from DynamoDB output.
-	var user User
-	err = attributevalue.UnmarshalMap(r.Item, &user)
+	var u User
+	err = attributevalue.UnmarshalMap(r.Item, &u)
 	if err != nil {
 		log.Printf("%v: %v, %v", ErrorFailedToUnmarshalMap, r.Item, err)
 		return nil, ErrorFailedToUnmarshalMap
 	}
-	log.Printf("user: %v", user)
+	log.Printf("user: %v", u)
 
-	return &user, nil
+	return &u, nil
 }
 
-func FetchUsers(user User) {
+// FetchUsers fetches items from DynamoDB table.
+func FetchUsers() ([]User, error) {
+	var input *dynamodb.BatchGetItemInput
+	var users []User
+	r, err := userTable.DynamoDbClient.BatchGetItem(context.TODO(), input)
+	fmt.Printf("%v, %v", r, err)
+	return users, nil
 }
 
 // CreateUser creates user in DynamoDB table.
@@ -161,16 +168,17 @@ func CreateUser(user User) error {
 
 // UpdateUser updates existing user in DynamoDB table.
 func UpdateUser(user User) error {
-	u, err := FetchUser(user.Email)
-	if err != nil {
-		return err // Bypassing error from the FetchUser function to the caller to build response.
-	}
-
 	// Validate user struct if it has required email field.
-	err = validate.Struct(user)
+	err := validate.Struct(user)
 	if err != nil {
 		log.Printf("%v: %v, %v", ErrorFailedToValidateUser, user, err)
 		return ErrorFailedToValidateUser
+	}
+
+	var u *User
+	u, err = FetchUser(user.Email)
+	if err != nil {
+		return err // Bypassing error from the FetchUser function to the caller to build response.
 	}
 
 	// If the user exist create it again to overwrite data.
@@ -185,7 +193,13 @@ func UpdateUser(user User) error {
 }
 
 // DeleteUser deletes provided item to be deleted from DynamoDB table based on key (email).
-func DeleteUser(email string) error {
+func DeleteUser(email string) (*User, error) {
+	// Check for user existence.
+	u, err := FetchUser(email)
+	if err != nil {
+		return nil, err // Bypassing error from the FetchUser function to the caller to build response.
+	}
+
 	// Build input with key (user's email).
 	input := dynamodb.DeleteItemInput{
 		Key:          map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}},
@@ -199,16 +213,16 @@ func DeleteUser(email string) error {
 	log.Printf("DeleteItem response, err: %v: %v", r, err)
 	if err != nil {
 		log.Printf("%v: %v", ErrorFailedToDeleteItem, err)
-		return ErrorFailedToDeleteItem
+		return nil, ErrorFailedToDeleteItem
 	}
 
 	// Return an error if user does not exist (r.Attributes is nil).
 	if r.Attributes == nil {
 		log.Printf("user does not exist: %v", email)
-		return ErrorUserDoesNotExist
+		return nil, ErrorUserDoesNotExist
 	}
 
-	return nil
+	return u, nil
 }
 
 // GetKey returns key of a user in a required format.

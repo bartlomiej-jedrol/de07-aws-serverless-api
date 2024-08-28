@@ -9,16 +9,27 @@ import (
 	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/handlers"
 )
 
+// HandleRequest routes request to handler based on method and availability of "email" query parameter.
 func HandleRequest(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// Logging.
 	log.Printf("Request: %v", request)
 	log.Printf("HTTPMethod: %v", request.HTTPMethod)
 	log.Printf("Headers: %v", request.Headers)
 	log.Printf("PathParameters: %v", request.PathParameters)
 	log.Printf("QueryStringParameters: %v", request.QueryStringParameters)
 	log.Printf("Body: %v", request.Body)
+
+	// Check "email" query parameter existence.
+	_, ok := request.QueryStringParameters["email"]
+
 	switch request.HTTPMethod {
 	case "GET":
-		return handlers.GetUser(request)
+		// If "email" query parameter provided call GetUser else GetUsers.
+		if ok {
+			return handlers.GetUser(request)
+		} else {
+			return handlers.GetUsers()
+		}
 	case "POST":
 		return handlers.CreateUser(request)
 	case "PUT":
