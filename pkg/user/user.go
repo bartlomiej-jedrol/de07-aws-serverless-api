@@ -37,17 +37,23 @@ var (
 	// FailedToCreateDynamoDBClient Failed to create DynamoDB client.
 	ErrorFailedToCreateDynamoDBClient = errors.New("failed to create DynamoDB client")
 
-	//ErrorFailedToGetItem Failed to get item.
-	ErrorFailedToGetItem = errors.New("failed to get item (user data) from the DynamoDB")
-
 	// ErrorFailedToUnmarshalMap Failed to unmarshal map.
-	ErrorFailedToUnmarshalMap = errors.New("failed to unmarshal map for item get from the DynamoDB, item")
+	ErrorFailedToUnmarshalMap = errors.New("failed to unmarshal map for item")
 
 	// ErrorFailedToValidateUser Failed to validate user.
-	ErrorFailedToValidateUser = errors.New("failed to validate the user")
+	ErrorFailedToValidateUser = errors.New("failed to validate user")
+
+	// ErrorUserDoesNotExist User does not exist.
+	ErrorUserDoesNotExist = errors.New("user does not exist")
+
+	//ErrorFailedToGetItem Failed to get item.
+	ErrorFailedToGetItem = errors.New("failed to get item from DynamoDB")
 
 	// ErrorFailedToPutItem Failed to put item.
-	ErrorFailedToPutItem = errors.New("failed to put item to the DynamoDB")
+	ErrorFailedToPutItem = errors.New("failed to put item to DynamoDB")
+
+	// ErrorFailedToDeleteItem Failed to delete item.
+	ErrorFailedToDeleteItem = errors.New("failed to delete item from DynamoDB")
 )
 
 func init() {
@@ -67,41 +73,44 @@ func init() {
 	validate = validator.New()
 }
 
+// FetchUser fetches provided item from DynamoDB table based on key (email).
 func FetchUser(email string) (*User, error) {
-	// Build input with key (user's email) of the item to be fetched from the DynamoDB table.
-	key := map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}}
-	input := dynamodb.GetItemInput{Key: key, TableName: aws.String(userTable.TableName)}
+	// Build input with key (user's email).
+	input := dynamodb.GetItemInput{
+		Key:       map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}},
+		TableName: aws.String(userTable.TableName),
+	}
 
-	// Get user data from the DynamoDB table. If err return to the caller.
-	response, err := userTable.DynamoDbClient.GetItem(context.TODO(), &input)
-	log.Printf("========== response ==========: %v", response)
+	// Get user data from DynamoDB table.
+	r, err := userTable.DynamoDbClient.GetItem(context.TODO(), &input)
+	log.Printf("FetchUser response: %v", r)
 	if err != nil {
 		log.Printf("%v: %v", ErrorFailedToGetItem, err)
-		return nil, err
+		return nil, ErrorFailedToGetItem
 	}
 
-	// Extract user data from the DynamoDB output.
+	// Return an error if user does not exist (r.Item is nil).
+	if r.Item == nil {
+		log.Printf("%v: %v", ErrorUserDoesNotExist, err)
+		return nil, ErrorUserDoesNotExist
+	}
+
+	// Extract user data from DynamoDB output.
 	var user User
-	err = attributevalue.UnmarshalMap(response.Item, &user)
+	err = attributevalue.UnmarshalMap(r.Item, &user)
 	if err != nil {
-		log.Printf("%v: %v, %v", ErrorFailedToUnmarshalMap, response.Item, err)
-		return nil, err
+		log.Printf("%v: %v, %v", ErrorFailedToUnmarshalMap, r.Item, err)
+		return nil, ErrorFailedToUnmarshalMap
 	}
-	log.Printf("========== user ==========: %v", user)
+	log.Printf("user: %v", user)
 
-	// Validate the user struct.
-	err = validate.Struct(user)
-	if err != nil {
-		log.Printf("%v: %v, %v", ErrorFailedToValidateUser, user, err)
-		return nil, err
-	}
 	return &user, nil
 }
 
 func FetchUsers(user User) {
 }
 
-// CreateUser creates user in DynamoDB table. It returns error in case of failure.
+// CreateUser creates user in DynamoDB table.
 func CreateUser(user User) error {
 	// Prepare user item with all attributes.
 	item := map[string]types.AttributeValue{
@@ -110,21 +119,21 @@ func CreateUser(user User) error {
 		"lastName":  &types.AttributeValueMemberS{Value: user.LastName},
 		"age":       &types.AttributeValueMemberN{Value: strconv.Itoa(user.Age)},
 	}
-	log.Printf("========== item ==========: %v", item)
+	log.Printf("CreateUser item: %v", item)
 
-	// Prepare input for the PutItem method.
+	// Prepare input for PutItem method.
 	input := dynamodb.PutItemInput{
 		Item:         item,
 		TableName:    aws.String(userTable.TableName),
 		ReturnValues: "ALL_OLD",
 	}
-	log.Printf("========== input ==========: %v", input)
+	log.Printf("CreateUser input: %v", input)
 
 	// Put item into DynamoDB table.
 	_, err := userTable.DynamoDbClient.PutItem(context.TODO(), &input)
 	if err != nil {
 		log.Printf("%v: %v", ErrorFailedToPutItem, err)
-		return err
+		return ErrorFailedToPutItem
 	}
 
 	// Logging methods.
@@ -134,7 +143,7 @@ func CreateUser(user User) error {
 	// if err != nil {
 	// 	log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
 	// }
-	// log.Printf("========== responseAttributes ==========: %v", responseUser)
+	// log.Printf("responseAttributes: %v", responseUser)
 
 	// Unmarshaling a single attribute.
 	// var userEmail string
@@ -142,28 +151,64 @@ func CreateUser(user User) error {
 	// if err != nil {
 	// 	log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
 	// }
-	// log.Printf("========== unmarshal ==========: %v", userEmail)
+	// log.Printf("unmarshal: %v", userEmail)
 
 	// // Printing value of a single attribute.
-	// log.Printf("========== item ==========: %v", item["email"].(*types.AttributeValueMemberS).Value)
+	// log.Printf("item: %v", item["email"].(*types.AttributeValueMemberS).Value)
 
 	return nil
 }
 
-// UpdateUser updates existing user in DynamoDB table. It returns error in case of failure.
+// UpdateUser updates existing user in DynamoDB table.
 func UpdateUser(user User) error {
-	u, _ := FetchUser(user.Email)
+	u, err := FetchUser(user.Email)
+	if err != nil {
+		return err // Bypassing error from the FetchUser function to the caller to build response.
+	}
+
+	// Validate user struct if it has required email field.
+	err = validate.Struct(user)
+	if err != nil {
+		log.Printf("%v: %v, %v", ErrorFailedToValidateUser, user, err)
+		return ErrorFailedToValidateUser
+	}
+
+	// If the user exist create it again to overwrite data.
 	if u != nil {
 		err := CreateUser(user)
 		if err != nil {
-			return err
+			return err // Bypassing error from the FetchUser function to the caller to build response.
 		}
 	}
+
 	return nil
 }
 
-func DeleteUser() {
+// DeleteUser deletes provided item to be deleted from DynamoDB table based on key (email).
+func DeleteUser(email string) error {
+	// Build input with key (user's email).
+	input := dynamodb.DeleteItemInput{
+		Key:          map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}},
+		TableName:    aws.String(userTable.TableName),
+		ReturnValues: "ALL_OLD",
+	}
+	log.Printf("DeleteUser input: %v", input)
 
+	// Delete item from DynamoDB table.
+	r, err := userTable.DynamoDbClient.DeleteItem(context.TODO(), &input)
+	log.Printf("DeleteItem response, err: %v: %v", r, err)
+	if err != nil {
+		log.Printf("%v: %v", ErrorFailedToDeleteItem, err)
+		return ErrorFailedToDeleteItem
+	}
+
+	// Return an error if user does not exist (r.Attributes is nil).
+	if r.Attributes == nil {
+		log.Printf("user does not exist: %v", email)
+		return ErrorUserDoesNotExist
+	}
+
+	return nil
 }
 
 // GetKey returns key of a user in a required format.

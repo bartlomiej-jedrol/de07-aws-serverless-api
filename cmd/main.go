@@ -10,12 +10,12 @@ import (
 )
 
 func HandleRequest(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	log.Printf("========== Request ==========: %v", request)
-	log.Printf("========== HTTPMethod ==========: %v", request.HTTPMethod)
-	log.Printf("========== Headers ==========: %v", request.Headers)
-	log.Printf("========== PathParameters ==========: %v", request.PathParameters)
-	log.Printf("========== QueryStringParameters ==========: %v", request.QueryStringParameters)
-	log.Printf("========== Body ==========: %v", request.Body)
+	log.Printf("Request: %v", request)
+	log.Printf("HTTPMethod: %v", request.HTTPMethod)
+	log.Printf("Headers: %v", request.Headers)
+	log.Printf("PathParameters: %v", request.PathParameters)
+	log.Printf("QueryStringParameters: %v", request.QueryStringParameters)
+	log.Printf("Body: %v", request.Body)
 	switch request.HTTPMethod {
 	case "GET":
 		return handlers.GetUser(request)
