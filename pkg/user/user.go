@@ -63,7 +63,9 @@ func init() {
 func FetchUser(email string) (*User, error) {
 	// Build input with key (user's email).
 	input := dynamodb.GetItemInput{
-		Key:       map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}},
+		Key: map[string]types.AttributeValue{
+			"email": &types.AttributeValueMemberS{Value: email},
+		},
 		TableName: aws.String(userTable.TableName),
 	}
 
@@ -188,7 +190,7 @@ func UpdateUser(user User) error {
 	if u != nil {
 		err := CreateUser(user)
 		if err != nil {
-			return err // Bypassing error from the FetchUser function to the caller to build response.
+			return err // Bypassing error from FetchUser function to the caller to build response.
 		}
 	}
 
@@ -200,12 +202,14 @@ func DeleteUser(email string) (*User, error) {
 	// Check for user existence.
 	u, err := FetchUser(email)
 	if err != nil {
-		return nil, err // Bypassing error from the FetchUser function to the caller to build response.
+		return nil, err // Bypassing error from FetchUser function to the caller to build response.
 	}
 
 	// Build input with key (user's email).
 	input := dynamodb.DeleteItemInput{
-		Key:          map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: email}},
+		Key: map[string]types.AttributeValue{
+			"email": &types.AttributeValueMemberS{Value: email},
+		},
 		TableName:    aws.String(userTable.TableName),
 		ReturnValues: "ALL_OLD",
 	}
@@ -230,5 +234,7 @@ func DeleteUser(email string) (*User, error) {
 
 // GetKey returns key of a user in a required format.
 func GetKey(user User) map[string]types.AttributeValue {
-	return map[string]types.AttributeValue{"email": &types.AttributeValueMemberS{Value: user.Email}}
+	return map[string]types.AttributeValue{
+		"email": &types.AttributeValueMemberS{Value: user.Email},
+	}
 }

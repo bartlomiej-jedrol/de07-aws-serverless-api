@@ -12,23 +12,12 @@ import (
 )
 
 var (
-	// ErrorMethodNotSupported Not supported method
-	ErrorMethodNotAllowed = errors.New("method not supported")
-
-	// ErrorInvalidJSON Invalid JSON
-	ErrorInvalidJSON = errors.New("invalid JSON")
-
-	// ErrorNoEmailQueryParameter No email query parameter
+	ErrorMethodNotAllowed      = errors.New("method not supported")
+	ErrorInvalidJSON           = errors.New("invalid JSON")
 	ErrorNoEmailQueryParameter = errors.New("no email query parameter")
-
-	// ErrorBadRequest Bad request
-	ErrorBadRequest = errors.New("bad request")
-
-	// ErrorNotFound Not found
-	ErrorNotFound = errors.New("not found")
-
-	// ErrorInternalServerError Internal server error
-	ErrorInternalServerError = errors.New("internal server error")
+	ErrorBadRequest            = errors.New("bad request")
+	ErrorNotFound              = errors.New("not found")
+	ErrorInternalServerError   = errors.New("internal server error")
 )
 
 type ErrorBody struct {
@@ -36,9 +25,9 @@ type ErrorBody struct {
 }
 
 // unmarshalUser unmarshals user from body.
-func unmarshalUser(request events.APIGatewayProxyRequest) (*user.User, error) {
+func unmarshalUser(body string) (*user.User, error) {
 	var u user.User
-	err := json.Unmarshal([]byte(request.Body), &u)
+	err := json.Unmarshal([]byte(body), &u)
 	if err != nil {
 		log.Printf("%v: %v", ErrorInvalidJSON, err)
 		return nil, ErrorInvalidJSON
@@ -51,7 +40,8 @@ func unmarshalUser(request events.APIGatewayProxyRequest) (*user.User, error) {
 // mapErrorToResponse maps business logic errors to the HTTP response errors and status codes.
 func mapErrorToResponse(err error) (int, error) {
 	switch err {
-	case user.ErrorFailedToGetItem, user.ErrorFailedToGetItems, user.ErrorFailedToPutItem, user.ErrorFailedToDeleteItem, user.ErrorFailedToUnmarshalMap:
+	case user.ErrorFailedToGetItem, user.ErrorFailedToGetItems, user.ErrorFailedToPutItem,
+		user.ErrorFailedToDeleteItem, user.ErrorFailedToUnmarshalMap:
 		return http.StatusInternalServerError, ErrorInternalServerError
 	case user.ErrorUserDoesNotExist:
 		return http.StatusNotFound, ErrorNotFound
@@ -99,7 +89,7 @@ func GetUsers() (*events.APIGatewayProxyResponse, error) {
 // CreateUser creates user in DynamoDB table and responds.
 func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
-	u, err := unmarshalUser(request)
+	u, err := unmarshalUser(request.Body)
 	if err != nil {
 		statusCode, errorMessage := mapErrorToResponse(err)
 		return buildAPIResponse(statusCode, errorMessage)
@@ -124,7 +114,7 @@ func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 // UpdateUser updates user data in DynamoDB table and responds.
 func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
-	u, err := unmarshalUser(request)
+	u, err := unmarshalUser(request.Body)
 	if err != nil {
 		statusCode, errorMessage := mapErrorToResponse(err)
 		return buildAPIResponse(statusCode, errorMessage)
@@ -162,7 +152,8 @@ func DeleteUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 }
 
 // UnhandledHTTPMethod responds for unsupported HTTP methods.
-func UnhandledHTTPMethod(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+func UnhandledHTTPMethod(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse,
+	error) {
 	log.Printf("unsupported HTTP method")
 	return buildAPIResponse(http.StatusMethodNotAllowed, ErrorMethodNotAllowed)
 }
