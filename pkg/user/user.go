@@ -4,7 +4,6 @@ package user
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -32,29 +31,15 @@ var (
 	userTable = TableBasics{TableName: "de07-user"}
 	validate  *validator.Validate
 
-	// ErrorFailedToLoadAWSConfig Failed to load AWS config.
-	ErrorFailedToLoadAWSConfig = errors.New("failed to load AWS config")
-
-	// FailedToCreateDynamoDBClient Failed to create DynamoDB client.
+	ErrorFailedToLoadAWSConfig        = errors.New("failed to load AWS config")
 	ErrorFailedToCreateDynamoDBClient = errors.New("failed to create DynamoDB client")
-
-	// ErrorFailedToUnmarshalMap Failed to unmarshal map.
-	ErrorFailedToUnmarshalMap = errors.New("failed to unmarshal map for item")
-
-	// ErrorFailedToValidateUser Failed to validate user.
-	ErrorFailedToValidateUser = errors.New("failed to validate user")
-
-	// ErrorUserDoesNotExist User does not exist.
-	ErrorUserDoesNotExist = errors.New("user does not exist")
-
-	//ErrorFailedToGetItem Failed to get item.
-	ErrorFailedToGetItem = errors.New("failed to get item from DynamoDB")
-
-	// ErrorFailedToPutItem Failed to put item.
-	ErrorFailedToPutItem = errors.New("failed to put item to DynamoDB")
-
-	// ErrorFailedToDeleteItem Failed to delete item.
-	ErrorFailedToDeleteItem = errors.New("failed to delete item from DynamoDB")
+	ErrorFailedToUnmarshalMap         = errors.New("failed to unmarshal map for item")
+	ErrorFailedToValidateUser         = errors.New("failed to validate user")
+	ErrorUserDoesNotExist             = errors.New("user does not exist")
+	ErrorFailedToGetItem              = errors.New("failed to get item from DynamoDB")
+	ErrorFailedToGetItems             = errors.New("failed to get items from DynamoDB")
+	ErrorFailedToPutItem              = errors.New("failed to put item to DynamoDB")
+	ErrorFailedToDeleteItem           = errors.New("failed to delete item from DynamoDB")
 )
 
 func init() {
@@ -110,10 +95,28 @@ func FetchUser(email string) (*User, error) {
 
 // FetchUsers fetches items from DynamoDB table.
 func FetchUsers() ([]User, error) {
-	var input *dynamodb.BatchGetItemInput
+	// Scan items of DynamoDB table.
+	input := dynamodb.ScanInput{TableName: &userTable.TableName}
+	r, err := userTable.DynamoDbClient.Scan(context.TODO(), &input)
+	if err != nil {
+		log.Printf("%v: %v", ErrorFailedToGetItems, err)
+		return nil, ErrorFailedToGetItems
+	}
+	log.Printf("r.Items: %v", r.Items)
+
+	// Build list of users.
 	var users []User
-	r, err := userTable.DynamoDbClient.BatchGetItem(context.TODO(), input)
-	fmt.Printf("%v, %v", r, err)
+	for _, item := range r.Items {
+		var u User
+		err := attributevalue.UnmarshalMap(item, &u)
+		if err != nil {
+			log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
+			return nil, ErrorFailedToUnmarshalMap
+		}
+		users = append(users, u)
+	}
+	log.Printf("users: %v", users)
+
 	return users, nil
 }
 

@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -10,12 +11,16 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
+var (
+	ErrorFailedToMarshalJSON = errors.New("failed to marshal JSON")
+)
+
 // buildResponseBody returns body of the API response based on the status code.
-func buildResponseBody(status int, body interface{}) string {
+func buildResponseBody(status int, body interface{}) (int, string) {
 	successfulStatuses := []int{200, 201}
-	// If the status is not successful then add error message as body.
+	// If the status is not successful then add error message to response body.
 	if !slices.Contains(successfulStatuses, status) {
-		// Convert error to string if exists.
+		// If exists, convert error to string.
 		var errorMessage string
 		if err, ok := body.(error); ok {
 			errorMessage = err.Error()
@@ -23,19 +28,22 @@ func buildResponseBody(status int, body interface{}) string {
 			errorMessage = fmt.Sprintf("%v", body)
 		}
 
+		// Build body with error message.
 		body := map[string]interface{}{"error": errorMessage}
 		responseBody, err := json.Marshal(body)
 		if err != nil {
-			fmt.Printf("Failed to marshal JSON: %v", err)
+			log.Printf("%v: %v", ErrorFailedToMarshalJSON, err)
+			return 500, ""
 		}
-		return string(responseBody)
+		return status, string(responseBody)
 		// Else keep body as is.
 	} else {
 		responseBody, err := json.Marshal(body)
 		if err != nil {
-			fmt.Printf("Failed to marshal JSON: %v", err)
+			log.Printf("%v: %v", ErrorFailedToMarshalJSON, err)
+			return 500, ""
 		}
-		return string(responseBody)
+		return status, string(responseBody)
 	}
 }
 
@@ -47,7 +55,7 @@ func buildAPIResponse(status int, body interface{}) (*events.APIGatewayProxyResp
 		StatusCode: status,
 	}
 
-	responseBody.Body = buildResponseBody(status, body)
-	log.Printf("========== responseBody ==========: %v", responseBody)
+	responseBody.StatusCode, responseBody.Body = buildResponseBody(status, body)
+	log.Printf("responseBody: %v", responseBody)
 	return responseBody, nil
 }

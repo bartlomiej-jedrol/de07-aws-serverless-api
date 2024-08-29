@@ -35,6 +35,7 @@ type ErrorBody struct {
 	ErrorMsg *string `json:"error,omitempty"`
 }
 
+// unmarshalUser unmarshals user from body.
 func unmarshalUser(request events.APIGatewayProxyRequest) (*user.User, error) {
 	var u user.User
 	err := json.Unmarshal([]byte(request.Body), &u)
@@ -47,9 +48,10 @@ func unmarshalUser(request events.APIGatewayProxyRequest) (*user.User, error) {
 	return &u, nil
 }
 
+// mapErrorToResponse maps business logic errors to the HTTP response errors and status codes.
 func mapErrorToResponse(err error) (int, error) {
 	switch err {
-	case user.ErrorFailedToGetItem, user.ErrorFailedToPutItem, user.ErrorFailedToDeleteItem, user.ErrorFailedToUnmarshalMap:
+	case user.ErrorFailedToGetItem, user.ErrorFailedToGetItems, user.ErrorFailedToPutItem, user.ErrorFailedToDeleteItem, user.ErrorFailedToUnmarshalMap:
 		return http.StatusInternalServerError, ErrorInternalServerError
 	case user.ErrorUserDoesNotExist:
 		return http.StatusNotFound, ErrorNotFound
@@ -60,8 +62,7 @@ func mapErrorToResponse(err error) (int, error) {
 	}
 }
 
-// GetUser gets user data from DynamoDB table.
-// It also returns response to caller.
+// GetUser gets user data from DynamoDB and responds.
 func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Extract users's email from request.
 	email := request.QueryStringParameters["email"]
@@ -82,8 +83,7 @@ func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResp
 	return buildAPIResponse(http.StatusOK, u)
 }
 
-// GetUsers gets users' data from DynamoDB table.
-// It also returns response to caller.
+// GetUsers gets users' data from DynamoDB table and responds.
 func GetUsers() (*events.APIGatewayProxyResponse, error) {
 	// Fetch users.
 	users, err := user.FetchUsers()
@@ -96,8 +96,7 @@ func GetUsers() (*events.APIGatewayProxyResponse, error) {
 	return buildAPIResponse(http.StatusOK, users)
 }
 
-// CreateUser extracts user data from request and creates user in DynamoDB table.
-// It also returns response to caller.
+// CreateUser creates user in DynamoDB table and responds.
 func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
 	u, err := unmarshalUser(request)
@@ -122,8 +121,7 @@ func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	return buildAPIResponse(http.StatusCreated, u)
 }
 
-// UpdateUser updates user data in DynamoDB table.
-// It also returns response to caller.
+// UpdateUser updates user data in DynamoDB table and responds.
 func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
 	u, err := unmarshalUser(request)
@@ -143,6 +141,7 @@ func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	return buildAPIResponse(http.StatusOK, u)
 }
 
+// DeleteUser deletes user data from DynamoDB table and responds.
 func DeleteUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Extract users's email from request.
 	email := request.QueryStringParameters["email"]
@@ -162,7 +161,8 @@ func DeleteUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 	return buildAPIResponse(http.StatusOK, *u)
 }
 
+// UnhandledHTTPMethod responds for unsupported HTTP methods.
 func UnhandledHTTPMethod(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	log.Println("UnhandledHTTPMethod called")
+	log.Printf("unsupported HTTP method")
 	return buildAPIResponse(http.StatusMethodNotAllowed, ErrorMethodNotAllowed)
 }

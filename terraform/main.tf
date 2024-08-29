@@ -60,6 +60,7 @@ resource "aws_iam_role_policy" "lambda_inline_policy" {
           "dynamodb:GetItem",
           "dynamodb:UpdateItem",
           "dynamodb:DeleteItem",
+          "dynamodb:Scan",
         ]
         Resource = [aws_dynamodb_table.dynamodb_table.arn]
       },
