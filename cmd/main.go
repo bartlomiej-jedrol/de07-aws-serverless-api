@@ -12,7 +12,7 @@ import (
 // HandleRequest routes request to handler based on method and availability of "email"
 // query parameter.
 func HandleRequest(
-	request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	request events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	// Logging.
 	log.Printf("Request: %v", request)
 	log.Printf("HTTPMethod: %v", request.HTTPMethod)
