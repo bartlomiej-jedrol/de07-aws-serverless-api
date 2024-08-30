@@ -53,13 +53,13 @@ post_missing_email:
 # PUT
 
 put:
-	curl --header "Content-Type: application/json" --request PUT --data '{"email": "bartlomiej.jedrol@gmail.com", "firstName": "BartlomiejUpdated4", "lastName": "JedrolUpdated4", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
+	curl --header "Content-Type: application/json" --request PUT --data '{"email": "bartlomiej.jedrol@gmail.com", "firstName": "Bartlomiej", "lastName": "Jedrol", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
 
 put_invalid_json:
-	curl --header "Content-Type: application/json" --request PUT --data '{""email": "bartlomiej.jedrol@gmail.com", "firstName": "BartlomiejUpdated4", "lastName": "JedrolUpdated4", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
+	curl --header "Content-Type: application/json" --request PUT --data '{""email": "bartlomiej.jedrol@gmail.com", "firstName": "BartlomiejUpdated", "lastName": "JedrolUpdated", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
 
 put_missing_email:
-	curl --header "Content-Type: application/json" --request PUT --data '{"firstName": "BartlomiejUpdated4", "lastName": "JedrolUpdated4", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
+	curl --header "Content-Type: application/json" --request PUT --data '{"firstName": "BartlomiejUpdated", "lastName": "JedrolUpdated", "age": 37}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
 
 put_user_does_not_exist:
 	curl --header "Content-Type: application/json" --request PUT --data '{"email": "test.test@gmail.com", "firstName": "test", "lastName": "test", "age": 1}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=test.test@gmail.com
@@ -79,3 +79,8 @@ delete_user_does_not_exist:
 
 not_allowed:
 	curl --header "Content-Type: application/json" --request PATCH --data '{"email": "bartlomiej.jedrol@gmail.com", "firstName": "Bartlomiej_updated", "lastName": "Jedrol_updated", "age": 37_updated}' https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
+
+# TESTING
+
+test:
+	go test -v ./...

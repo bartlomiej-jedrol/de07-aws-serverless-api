@@ -53,7 +53,7 @@ func mapErrorToResponse(err error) (int, error) {
 }
 
 // GetUser gets user data from DynamoDB and responds.
-func GetUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+func GetUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Extract users's email from request.
 	email := request.QueryStringParameters["email"]
 	if email == "" {
@@ -74,7 +74,7 @@ func GetUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyRespo
 }
 
 // GetUsers gets users' data from DynamoDB table and responds.
-func GetUsers() *events.APIGatewayProxyResponse {
+func GetUsers() (*events.APIGatewayProxyResponse, error) {
 	// Fetch users.
 	users, err := user.FetchUsers()
 	if err != nil {
@@ -87,7 +87,7 @@ func GetUsers() *events.APIGatewayProxyResponse {
 }
 
 // CreateUser creates user in DynamoDB table and responds.
-func CreateUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
 	u, err := unmarshalUser(request.Body)
 	if err != nil {
@@ -97,7 +97,7 @@ func CreateUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 
 	// Check email existence.
 	if u.Email == "" {
-		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
+		return buildAPIResponse(http.StatusNotFound, ErrorNotFound)
 	}
 
 	// Create user.
@@ -112,7 +112,7 @@ func CreateUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 }
 
 // UpdateUser updates user data in DynamoDB table and responds.
-func UpdateUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+func UpdateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Unmarshal received user JSON data.
 	u, err := unmarshalUser(request.Body)
 	if err != nil {
@@ -132,7 +132,7 @@ func UpdateUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 }
 
 // DeleteUser deletes user data from DynamoDB table and responds.
-func DeleteUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+func DeleteUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Extract users's email from request.
 	email := request.QueryStringParameters["email"]
 	if email == "" {
@@ -153,7 +153,8 @@ func DeleteUser(request events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 }
 
 // UnhandledHTTPMethod responds for unsupported HTTP methods.
-func UnhandledHTTPMethod(request events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+func UnhandledHTTPMethod(
+	request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	log.Printf("unsupported HTTP method")
 	return buildAPIResponse(http.StatusMethodNotAllowed, ErrorMethodNotAllowed)
 }

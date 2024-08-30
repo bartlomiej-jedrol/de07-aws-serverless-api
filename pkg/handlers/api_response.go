@@ -48,14 +48,14 @@ func buildResponseBody(status int, body interface{}) (int, string) {
 }
 
 // buildAPIResponse builds API response.
-func buildAPIResponse(status int, body interface{}) *events.APIGatewayProxyResponse {
+func buildAPIResponse(status int, body interface{}) (*events.APIGatewayProxyResponse, error) {
 	// Build response body.
+	log.Printf("buildAPIResponse status: %v", status)
 	responseBody := &events.APIGatewayProxyResponse{
 		Headers:    map[string]string{"Content-Type": "application/json"},
 		StatusCode: status,
 	}
 
 	responseBody.StatusCode, responseBody.Body = buildResponseBody(status, body)
-	log.Printf("responseBody: %v", responseBody)
-	return responseBody
+	return responseBody, nil
 }
