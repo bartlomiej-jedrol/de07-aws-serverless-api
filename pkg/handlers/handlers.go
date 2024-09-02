@@ -97,7 +97,7 @@ func CreateUser(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyR
 
 	// Check email existence.
 	if u.Email == "" {
-		return buildAPIResponse(http.StatusNotFound, ErrorNotFound)
+		return buildAPIResponse(http.StatusBadRequest, ErrorBadRequest)
 	}
 
 	// Create user.

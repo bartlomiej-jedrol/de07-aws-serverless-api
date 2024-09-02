@@ -230,8 +230,8 @@ func TestCreateUser(t *testing.T) {
 				Body:       emptyUser,
 			},
 			expected: events.APIGatewayProxyResponse{
-				StatusCode: http.StatusNotFound,
-				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorNotFound.Error()),
+				StatusCode: http.StatusBadRequest,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorBadRequest.Error()),
 			},
 		},
 		{
@@ -274,45 +274,138 @@ func TestUpdateUser(t *testing.T) {
 				Body:       validUser,
 			},
 		},
-		// {
-		// 	name: "Invalid user",
-		// 	request: events.APIGatewayProxyRequest{
-		// 		HTTPMethod: "PUT",
-		// 		Body:       invalidUser,
-		// 	},
-		// 	expected: events.APIGatewayProxyResponse{
-		// 		StatusCode: http.StatusOK,
-		// 		Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorNotFound.Error()),
-		// 	},
-		// },
-		// {
-		// 	name: "Empty user",
-		// 	request: events.APIGatewayProxyRequest{
-		// 		HTTPMethod: "PUT",
-		// 		Body:       emptyUser,
-		// 	},
-		// 	expected: events.APIGatewayProxyResponse{
-		// 		StatusCode: http.StatusNotFound,
-		// 		Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorNotFound.Error()),
-		// 	},
-		// },
-		// {
-		// 	name: "Invalid JSON",
-		// 	request: events.APIGatewayProxyRequest{
-		// 		HTTPMethod: "PUT",
-		// 		Body:       invalidJSON,
-		// 	},
-		// 	expected: events.APIGatewayProxyResponse{
-		// 		StatusCode: http.StatusBadRequest,
-		// 		Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorBadRequest.Error()),
-		// 	},
-		// },
+		{
+			name: "Invalid user",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "PUT",
+				Body:       invalidUser,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusNotFound,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorNotFound.Error()),
+			},
+		},
+		{
+			name: "Empty user",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "PUT",
+				Body:       emptyUser,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorBadRequest.Error()),
+			},
+		},
+		{
+			name: "Invalid JSON",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "PUT",
+				Body:       invalidJSON,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorBadRequest.Error()),
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("tt: %v", tt)
 			actual, _ := UpdateUser(tt.request)
+			t.Logf("actual: %v", actual)
+			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
+			assert.JSONEq(t, actual.Body, tt.expected.Body)
+		})
+	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	tests := []struct {
+		name     string
+		request  events.APIGatewayProxyRequest
+		expected events.APIGatewayProxyResponse
+	}{
+		{
+			name: "Valid user",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "DELETE",
+				Body:       validUser,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusOK,
+				Body:       validUser,
+			},
+		},
+		{
+			name: "Invalid user",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "DELETE",
+				Body:       invalidUser,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusNotFound,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorNotFound.Error()),
+			},
+		},
+		{
+			name: "Empty user",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "DELETE",
+				Body:       emptyUser,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorBadRequest.Error()),
+			},
+		},
+		{
+			name: "Invalid JSON",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "DELETE",
+				Body:       invalidJSON,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusBadRequest,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorBadRequest.Error()),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("tt: %v", tt)
+			actual, _ := UpdateUser(tt.request)
+			t.Logf("actual: %v", actual)
+			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
+			assert.JSONEq(t, actual.Body, tt.expected.Body)
+		})
+	}
+}
+
+func TestUnhandledHTTPMethod(t *testing.T) {
+	tests := []struct {
+		name     string
+		request  events.APIGatewayProxyRequest
+		expected events.APIGatewayProxyResponse
+	}{
+		{
+			name: "Unhandled HTTP method",
+			request: events.APIGatewayProxyRequest{
+				HTTPMethod: "PATCH",
+				Body:       validUser,
+			},
+			expected: events.APIGatewayProxyResponse{
+				StatusCode: http.StatusMethodNotAllowed,
+				Body:       fmt.Sprintf(`{"error":"%v"}`, ErrorMethodNotAllowed.Error()),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("tt: %v", tt)
+			actual, _ := UnhandledHTTPMethod(tt.request)
 			t.Logf("actual: %v", actual)
 			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
 			assert.JSONEq(t, actual.Body, tt.expected.Body)
