@@ -18,7 +18,7 @@ var (
 		Email:     "jedrol.natalia@gmail.com",
 		FirstName: "Natalia",
 		LastName:  "Jedrol",
-		Age:       37,
+		Age:       33,
 	}
 
 	InvalidUser1 = models.User{
@@ -28,22 +28,22 @@ var (
 		Age:       1,
 	}
 
-	ValidUser string = fmt.Sprintf(`{"email":%v,"firstName":%v,"lastName":%v,"age":%v}`,
+	ValidUser string = fmt.Sprintf(`{"email":"%v","firstName":"%v","lastName":"%v","age":%v}`,
 		ValidUser1.Email, ValidUser1.FirstName, ValidUser1.LastName, ValidUser1.Age)
 
-	InvalidUser string = fmt.Sprintf(`{"email":%v,"firstName":%v,"lastName":%v,"age":%v}`,
+	InvalidUser string = fmt.Sprintf(`{"email":"%v","firstName":"%v","lastName":"%v","age":%v}`,
 		InvalidUser1.Email, InvalidUser1.FirstName, InvalidUser1.LastName, InvalidUser1.Age)
 
-	UserEmptyEmail string = fmt.Sprintf(`{"email":"","firstName":%v,"lastName":%v,"age":%v}`,
+	UserEmptyEmail string = fmt.Sprintf(`{"email":"","firstName":"%v","lastName":"%v","age":%v}`,
 		ValidUser1.FirstName, ValidUser1.LastName, ValidUser1.Age)
 
 	EmptyUser string = `{}`
 
-	InvalidJSON string = fmt.Sprintf(`{"email":"%v,"firstName":%v,"lastName":%v,"age":%v}`,
+	InvalidJSON string = fmt.Sprintf(`{"email":""%v","firstName":"%v","lastName":"%v","age":%v}`,
 		ValidUser1.Email, ValidUser1.FirstName, ValidUser1.LastName, ValidUser1.Age)
 
-	ValidUsers string = fmt.Sprintf(`[{"email":%v,"firstName":%v,"lastName":%v,"age":%v},{"email":%v,"firstName":%v,"lastName":%v,"age":%v}]`,
-		ValidUser1.Email, ValidUser1.FirstName, ValidUser1.LastName, ValidUser1.Age, ValidUser2.Email, ValidUser2.FirstName, ValidUser2.LastName, ValidUser2.Age)
+	ValidUsers string = fmt.Sprintf(`[{"email":"%v","firstName":"%v","lastName":"%v","age":%v},{"email":"%v","firstName":"%v","lastName":"%v","age":%v}]`,
+		ValidUser2.Email, ValidUser2.FirstName, ValidUser2.LastName, ValidUser2.Age, ValidUser1.Email, ValidUser1.FirstName, ValidUser1.LastName, ValidUser1.Age)
 
 	ValidQueQueryStringParameters   = map[string]string{"email": ValidUser1.Email}
 	InvalidQueQueryStringParameters = map[string]string{"email": InvalidUser1.Email}
