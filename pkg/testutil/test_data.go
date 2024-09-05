@@ -28,6 +28,13 @@ var (
 		Age:       1,
 	}
 
+	EmptyUser1 = models.User{
+		Email:     "",
+		FirstName: "test",
+		LastName:  "test",
+		Age:       1,
+	}
+
 	ValidUser string = fmt.Sprintf(`{"email":"%v","firstName":"%v","lastName":"%v","age":%v}`,
 		ValidUser1.Email, ValidUser1.FirstName, ValidUser1.LastName, ValidUser1.Age)
 

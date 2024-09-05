@@ -69,6 +69,9 @@ put_user_does_not_exist:
 delete:
 	curl --header "Content-Type: application/json" --request DELETE https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=bartlomiej.jedrol@gmail.com
 
+delete_test:
+	curl --header "Content-Type: application/json" --request DELETE https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=test.test@gmail.com
+
 delete_empty_query_parameter:
 	curl --header "Content-Type: application/json" --request GET https://7t5wi1q5p4.execute-api.eu-central-1.amazonaws.com/dev\?email\=
 
