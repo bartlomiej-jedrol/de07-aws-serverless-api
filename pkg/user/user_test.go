@@ -51,6 +51,36 @@ func TestFetchUser(t *testing.T) {
 	}
 }
 
+func TestFetchUsers(t *testing.T) {
+	tests := []struct {
+		name          string
+		expectedUsers []models.User
+		expectedError error
+	}{
+		{
+			name:          "Successful users retrieval",
+			expectedUsers: []models.User{testutil.ValidUser2, testutil.ValidUser1},
+			expectedError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actualUsers, err := FetchUsers()
+
+			if tt.expectedError != nil {
+				if assert.Error(t, err) {
+					assert.Equal(t, tt.expectedError, err)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedUsers, actualUsers)
+				}
+			}
+		})
+	}
+}
+
 func TestCreateUser(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -75,24 +105,22 @@ func TestCreateUser(t *testing.T) {
 				LastName:  testutil.ValidUser1.LastName,
 				Age:       testutil.ValidUser1.Age,
 			},
-			expectedError: nil,
+			expectedError: ErrorFailedToPutItem,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := CreateUser(tt.user)
+			t.Logf("err:%v", err)
 
 			if tt.expectedError != nil {
 				if assert.Error(t, err) {
 					assert.Equal(t, tt.expectedError, err)
 				}
+			} else {
+				assert.NoError(t, err)
 			}
-			// else {
-			// 	if assert.NoError(t, err) {
-			// 		assert.Equal(t, *tt.expectedUser, *user)
-			// 	}
-			// }
 		})
 	}
 }

@@ -47,7 +47,6 @@ func TestUnmarshalUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("requestBody:%v", tt.requestBody)
 			actualUser, err := unmarshalUser(tt.requestBody)
 
 			if tt.expectedError != nil {
