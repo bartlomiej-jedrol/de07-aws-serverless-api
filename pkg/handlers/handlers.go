@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/models"
 	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/user"
 )
 
@@ -25,8 +26,8 @@ type ErrorBody struct {
 }
 
 // unmarshalUser unmarshals user from body.
-func unmarshalUser(body string) (*user.User, error) {
-	var u user.User
+func unmarshalUser(body string) (*models.User, error) {
+	var u models.User
 	err := json.Unmarshal([]byte(body), &u)
 	if err != nil {
 		log.Printf("%v: %v", ErrorInvalidJSON, err)

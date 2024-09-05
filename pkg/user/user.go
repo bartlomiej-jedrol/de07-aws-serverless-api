@@ -12,23 +12,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/models"
 	validator "github.com/go-playground/validator/v10"
 )
 
-type User struct {
-	Email     string `json:"email" validate:"required"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Age       int    `json:"age"`
-}
-
-type TableBasics struct {
-	DynamoDbClient *dynamodb.Client
-	TableName      string
-}
-
 var (
-	userTable = TableBasics{TableName: "de07-user"}
+	userTable = models.TableBasics{TableName: "de07-user"}
 	validate  *validator.Validate
 
 	ErrorFailedToLoadAWSConfig        = errors.New("failed to load AWS config")
@@ -60,7 +49,7 @@ func init() {
 }
 
 // FetchUser fetches provided item from DynamoDB table based on key (email).
-func FetchUser(email string) (*User, error) {
+func FetchUser(email string) (*models.User, error) {
 	// Build input with key (user's email).
 	input := dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
@@ -84,7 +73,7 @@ func FetchUser(email string) (*User, error) {
 	}
 
 	// Extract user data from DynamoDB output.
-	var u User
+	var u models.User
 	err = attributevalue.UnmarshalMap(r.Item, &u)
 	if err != nil {
 		log.Printf("%v: %v, %v", ErrorFailedToUnmarshalMap, r.Item, err)
@@ -96,7 +85,7 @@ func FetchUser(email string) (*User, error) {
 }
 
 // FetchUsers fetches items from DynamoDB table.
-func FetchUsers() ([]User, error) {
+func FetchUsers() ([]models.User, error) {
 	// Scan items of DynamoDB table.
 	input := dynamodb.ScanInput{TableName: &userTable.TableName}
 	r, err := userTable.DynamoDbClient.Scan(context.TODO(), &input)
@@ -107,9 +96,9 @@ func FetchUsers() ([]User, error) {
 	log.Printf("r.Items: %v", r.Items)
 
 	// Build list of users.
-	var users []User
+	var users []models.User
 	for _, item := range r.Items {
-		var u User
+		var u models.User
 		err := attributevalue.UnmarshalMap(item, &u)
 		if err != nil {
 			log.Printf("%v: %v", ErrorFailedToUnmarshalMap, err)
@@ -123,7 +112,7 @@ func FetchUsers() ([]User, error) {
 }
 
 // CreateUser creates user in DynamoDB table.
-func CreateUser(user User) error {
+func CreateUser(user models.User) error {
 	// Prepare user item with all attributes.
 	item := map[string]types.AttributeValue{
 		"email":     &types.AttributeValueMemberS{Value: user.Email},
@@ -172,7 +161,7 @@ func CreateUser(user User) error {
 }
 
 // UpdateUser updates existing user in DynamoDB table.
-func UpdateUser(user User) error {
+func UpdateUser(user models.User) error {
 	// Validate user struct if it has required email field.
 	err := validate.Struct(user)
 	if err != nil {
@@ -180,7 +169,7 @@ func UpdateUser(user User) error {
 		return ErrorFailedToValidateUser
 	}
 
-	var u *User
+	var u *models.User
 	u, err = FetchUser(user.Email)
 	if err != nil {
 		return err // Bypassing error from the FetchUser function to the caller to build response.
@@ -198,7 +187,7 @@ func UpdateUser(user User) error {
 }
 
 // DeleteUser deletes provided item to be deleted from DynamoDB table based on key (email).
-func DeleteUser(email string) (*User, error) {
+func DeleteUser(email string) (*models.User, error) {
 	// Check for user existence.
 	u, err := FetchUser(email)
 	if err != nil {
@@ -233,7 +222,7 @@ func DeleteUser(email string) (*User, error) {
 }
 
 // GetKey returns key of a user in a required format.
-func GetKey(user User) map[string]types.AttributeValue {
+func GetKey(user models.User) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
 		"email": &types.AttributeValueMemberS{Value: user.Email},
 	}

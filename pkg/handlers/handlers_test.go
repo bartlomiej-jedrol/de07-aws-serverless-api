@@ -7,61 +7,56 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/models"
+	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/testutil"
 	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/user"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	validEmail   string = "bartlomiej.jedrol@gmail.com"
-	invalidEmail string = "test.test@gmail.com"
-	validUser    string = `{"email":"bartlomiej.jedrol@gmail.com","firstName":"Bartlomiej","lastName":"Jedrol","age":37}`
-	invalidUser  string = `{"email":"test.test@gmail.com","firstName":"Bartlomiej","lastName":"Jedrol","age":37}`
-	emptyUser    string = `{"email":"","firstName":"Bartlomiej","lastName":"Jedrol","age":37}`
-	invalidJSON  string = `{"email":""bartlomiej.jedrol@gmail.com","firstName":"Bartlomiej","lastName":"Jedrol","age":37}`
-	validUsers   string = `[{"email":"jedrol.natalia@gmail.com","firstName":"Natalia","lastName":"Jedrol","age":33},{"email":"bartlomiej.jedrol@gmail.com","firstName":"Bartlomiej","lastName":"Jedrol","age":37}]`
 )
 
 func TestUnmarshalUser(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestBody   string
-		expected      *user.User
-		expectedError bool
+		expectedUser  *models.User
+		expectedError error
 	}{
 		{
 			name:        "Valid JSON",
-			requestBody: validUser,
-			expected: &user.User{
-				Email:     validEmail,
-				FirstName: "Bartlomiej",
-				LastName:  "Jedrol",
-				Age:       37,
+			requestBody: testutil.ValidUser,
+			expectedUser: &models.User{
+				Email:     testutil.ValidUser1.Email,
+				FirstName: testutil.ValidUser1.FirstName,
+				LastName:  testutil.ValidUser2.LastName,
+				Age:       testutil.ValidUser1.Age,
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 		{
 			name:          "Invalid User",
-			requestBody:   invalidJSON,
-			expected:      nil,
-			expectedError: true,
+			requestBody:   testutil.InvalidJSON,
+			expectedUser:  nil,
+			expectedError: ErrorInvalidJSON,
 		},
 		{
 			name:          "Empty User",
-			requestBody:   `{}`,
-			expected:      &user.User{},
-			expectedError: false,
+			requestBody:   testutil.EmptyUser,
+			expectedUser:  &models.User{},
+			expectedError: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := unmarshalUser(tt.requestBody)
+			actualUser, err := unmarshalUser(tt.requestBody)
 
-			if tt.expectedError {
-				assert.Error(t, err)
+			if tt.expectedError != nil {
+				if assert.Error(t, err) {
+					assert.Equal(t, tt.expectedError, err)
+				}
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
+				if assert.NoError(t, err) {
+					assert.Equal(t, *tt.expectedUser, *actualUser)
+				}
 			}
 		})
 	}
@@ -70,65 +65,65 @@ func TestUnmarshalUser(t *testing.T) {
 func TestMapErrorToResponse(t *testing.T) {
 	tests := []struct {
 		name               string
-		inputErr           error
+		inputError         error
 		expectedStatusCode int
-		expectedErr        error
+		expectedError      error
 	}{
 		{
 			name:               "ErrorFailedToGetItems",
-			inputErr:           user.ErrorFailedToGetItems,
+			inputError:         user.ErrorFailedToGetItems,
 			expectedStatusCode: http.StatusInternalServerError,
-			expectedErr:        ErrorInternalServerError,
+			expectedError:      ErrorInternalServerError,
 		},
 		{
 			name:               "ErrorFailedToPutItem",
-			inputErr:           user.ErrorFailedToPutItem,
+			inputError:         user.ErrorFailedToPutItem,
 			expectedStatusCode: http.StatusInternalServerError,
-			expectedErr:        ErrorInternalServerError,
+			expectedError:      ErrorInternalServerError,
 		},
 		{
 			name:               "ErrorFailedToDeleteItem",
-			inputErr:           user.ErrorFailedToDeleteItem,
+			inputError:         user.ErrorFailedToDeleteItem,
 			expectedStatusCode: http.StatusInternalServerError,
-			expectedErr:        ErrorInternalServerError,
+			expectedError:      ErrorInternalServerError,
 		},
 		{
 			name:               "ErrorFailedToUnmarshalMap",
-			inputErr:           user.ErrorFailedToUnmarshalMap,
+			inputError:         user.ErrorFailedToUnmarshalMap,
 			expectedStatusCode: http.StatusInternalServerError,
-			expectedErr:        ErrorInternalServerError,
+			expectedError:      ErrorInternalServerError,
 		},
 		{
 			name:               "ErrorUserDoesNotExist",
-			inputErr:           user.ErrorUserDoesNotExist,
+			inputError:         user.ErrorUserDoesNotExist,
 			expectedStatusCode: http.StatusNotFound,
-			expectedErr:        ErrorNotFound,
+			expectedError:      ErrorNotFound,
 		},
 		{
 			name:               "ErrorFailedToValidateUser",
-			inputErr:           user.ErrorFailedToValidateUser,
+			inputError:         user.ErrorFailedToValidateUser,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedErr:        ErrorBadRequest,
+			expectedError:      ErrorBadRequest,
 		},
 		{
 			name:               "ErrorInvalidJSON",
-			inputErr:           ErrorInvalidJSON,
+			inputError:         ErrorInvalidJSON,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedErr:        ErrorBadRequest,
+			expectedError:      ErrorBadRequest,
 		},
 		{
 			name:               "UnknownError",
-			inputErr:           errors.New("unknown error"),
+			inputError:         errors.New("unknown error"),
 			expectedStatusCode: http.StatusInternalServerError,
-			expectedErr:        ErrorInternalServerError,
+			expectedError:      ErrorInternalServerError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			statusCode, err := mapErrorToResponse(tt.inputErr)
+			statusCode, err := mapErrorToResponse(tt.inputError)
 			assert.Equal(t, tt.expectedStatusCode, statusCode)
-			assert.Equal(t, tt.expectedErr, err)
+			assert.Equal(t, tt.expectedError, err)
 		})
 	}
 }
@@ -143,18 +138,18 @@ func TestGetUser(t *testing.T) {
 			name: "Valid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod:            "GET",
-				QueryStringParameters: map[string]string{"email": validEmail},
+				QueryStringParameters: testutil.ValidQueQueryStringParameters,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusOK,
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 		},
 		{
 			name: "Invalid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod:            "GET",
-				QueryStringParameters: map[string]string{"email": invalidEmail},
+				QueryStringParameters: testutil.InvalidQueQueryStringParameters,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusNotFound,
@@ -177,8 +172,8 @@ func TestGetUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, _ := GetUser(tt.request)
-			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
-			assert.JSONEq(t, actual.Body, tt.expected.Body)
+			assert.Equal(t, tt.expected.StatusCode, actual.StatusCode)
+			assert.JSONEq(t, tt.expected.Body, actual.Body)
 		})
 	}
 }
@@ -192,7 +187,7 @@ func TestGetUsers(t *testing.T) {
 			name: "Successful retrieval of users",
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusOK,
-				Body:       validUsers,
+				Body:       testutil.ValidUsers,
 			},
 		},
 	}
@@ -200,8 +195,8 @@ func TestGetUsers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, _ := GetUsers()
-			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
-			assert.JSONEq(t, actual.Body, tt.expected.Body)
+			assert.Equal(t, tt.expected.StatusCode, actual.StatusCode)
+			assert.JSONEq(t, tt.expected.Body, actual.Body)
 		})
 	}
 }
@@ -216,18 +211,18 @@ func TestCreateUser(t *testing.T) {
 			name: "Valid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "POST",
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusCreated,
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 		},
 		{
 			name: "Empty user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "POST",
-				Body:       emptyUser,
+				Body:       testutil.UserEmptyEmail,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
@@ -238,7 +233,7 @@ func TestCreateUser(t *testing.T) {
 			name: "Invalid JSON",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "POST",
-				Body:       invalidJSON,
+				Body:       testutil.InvalidJSON,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
@@ -251,8 +246,8 @@ func TestCreateUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, _ := CreateUser(tt.request)
 			t.Log(actual)
-			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
-			assert.JSONEq(t, actual.Body, tt.expected.Body)
+			assert.Equal(t, tt.expected.StatusCode, actual.StatusCode)
+			assert.JSONEq(t, tt.expected.Body, actual.Body)
 		})
 	}
 }
@@ -267,18 +262,18 @@ func TestUpdateUser(t *testing.T) {
 			name: "Valid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "PUT",
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusOK,
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 		},
 		{
 			name: "Invalid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "PUT",
-				Body:       invalidUser,
+				Body:       testutil.InvalidUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusNotFound,
@@ -289,7 +284,7 @@ func TestUpdateUser(t *testing.T) {
 			name: "Empty user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "PUT",
-				Body:       emptyUser,
+				Body:       testutil.UserEmptyEmail,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
@@ -300,7 +295,7 @@ func TestUpdateUser(t *testing.T) {
 			name: "Invalid JSON",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "PUT",
-				Body:       invalidJSON,
+				Body:       testutil.InvalidJSON,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
@@ -314,8 +309,8 @@ func TestUpdateUser(t *testing.T) {
 			t.Logf("tt: %v", tt)
 			actual, _ := UpdateUser(tt.request)
 			t.Logf("actual: %v", actual)
-			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
-			assert.JSONEq(t, actual.Body, tt.expected.Body)
+			assert.Equal(t, tt.expected.StatusCode, actual.StatusCode)
+			assert.JSONEq(t, tt.expected.Body, actual.Body)
 		})
 	}
 }
@@ -330,18 +325,18 @@ func TestDeleteUser(t *testing.T) {
 			name: "Valid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "DELETE",
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusOK,
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 		},
 		{
 			name: "Invalid user",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "DELETE",
-				Body:       invalidUser,
+				Body:       testutil.InvalidUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusNotFound,
@@ -349,10 +344,10 @@ func TestDeleteUser(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty user",
+			name: "User empty email",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "DELETE",
-				Body:       emptyUser,
+				Body:       testutil.EmptyUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
@@ -363,7 +358,7 @@ func TestDeleteUser(t *testing.T) {
 			name: "Invalid JSON",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "DELETE",
-				Body:       invalidJSON,
+				Body:       testutil.InvalidJSON,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusBadRequest,
@@ -377,8 +372,8 @@ func TestDeleteUser(t *testing.T) {
 			t.Logf("tt: %v", tt)
 			actual, _ := UpdateUser(tt.request)
 			t.Logf("actual: %v", actual)
-			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
-			assert.JSONEq(t, actual.Body, tt.expected.Body)
+			assert.Equal(t, tt.expected.StatusCode, actual.StatusCode)
+			assert.JSONEq(t, tt.expected.Body, actual.Body)
 		})
 	}
 }
@@ -393,7 +388,7 @@ func TestUnhandledHTTPMethod(t *testing.T) {
 			name: "Unhandled HTTP method",
 			request: events.APIGatewayProxyRequest{
 				HTTPMethod: "PATCH",
-				Body:       validUser,
+				Body:       testutil.ValidUser,
 			},
 			expected: events.APIGatewayProxyResponse{
 				StatusCode: http.StatusMethodNotAllowed,
@@ -407,8 +402,8 @@ func TestUnhandledHTTPMethod(t *testing.T) {
 			t.Logf("tt: %v", tt)
 			actual, _ := UnhandledHTTPMethod(tt.request)
 			t.Logf("actual: %v", actual)
-			assert.Equal(t, actual.StatusCode, tt.expected.StatusCode)
-			assert.JSONEq(t, actual.Body, tt.expected.Body)
+			assert.Equal(t, tt.expected.StatusCode, actual.StatusCode)
+			assert.JSONEq(t, tt.expected.Body, actual.Body)
 		})
 	}
 }
