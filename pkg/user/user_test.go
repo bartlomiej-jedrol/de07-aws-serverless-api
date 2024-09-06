@@ -8,7 +8,10 @@ import (
 	"github.com/bartlomiej-jedrol/de07-aws-serverless-api/pkg/testutil"
 	"github.com/stretchr/testify/assert"
 )
-
+// TestFetchUser tests the FetchUser function to ensure it correctly retrieves a user by email.
+// It verifies that the function returns the expected user data for a valid email,
+// and the appropriate error for an invalid email. The test cases cover scenarios
+// for both existing and non-existing users in the database.
 func TestFetchUser(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -52,6 +55,10 @@ func TestFetchUser(t *testing.T) {
 	}
 }
 
+// TestFetchUsers tests the FetchUsers function to ensure it correctly retrieves all users.
+// It verifies that the function returns a slice containing the expected user data
+// and no error for a successful retrieval. The test case covers the scenario
+// of retrieving multiple users from the database.
 func TestFetchUsers(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -82,6 +89,10 @@ func TestFetchUsers(t *testing.T) {
 	}
 }
 
+// TestCreateUser tests the CreateUser function to ensure it correctly handles user creation.
+// It verifies that the function returns no error for a valid user creation,
+// and the appropriate error for invalid user data. The test cases cover scenarios
+// for both successful and unsuccessful user creations.
 func TestCreateUser(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -126,6 +137,11 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
+// TestUpdateUser tests the UpdateUser function to ensure it correctly handles user updates.
+// It verifies that the function returns no error for a valid user update,
+// and the appropriate error for invalid user data or non-existing users.
+// The test cases cover scenarios for successful updates, updates for non-existing users,
+// and updates with invalid data.
 func TestUpdateUser(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -165,6 +181,11 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
+// TestDeleteUser tests the DeleteUser function to ensure it correctly handles user deletion.
+// It verifies that the function returns the deleted user and no error for a valid deletion,
+// and the appropriate error for non-existing users or invalid email inputs.
+// The test cases cover scenarios for successful deletions, deletions of non-existing users,
+// and deletions with invalid or empty email inputs.
 func TestDeleteUer(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -210,6 +231,10 @@ func TestDeleteUer(t *testing.T) {
 	}
 }
 
+// TestGetKey tests the GetKey function to ensure it correctly generates the primary key
+// for a user in the format expected by DynamoDB. It verifies that the function returns
+// the correct AttributeValue map for a given user object. The test cases cover scenarios
+// for valid user objects with different email addresses.
 func TestGetKey(t *testing.T) {
 	tests := []struct {
 		name              string

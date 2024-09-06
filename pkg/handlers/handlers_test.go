@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestUnmarshalUser tests the unmarshalUser function to ensure a user is correctly unmarshaled from a JSON string.
+// It verifies that valid JSON is properly parsed, invalid JSON returns an error, and an empty user is handled correctly.
 func TestUnmarshalUser(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -62,6 +64,10 @@ func TestUnmarshalUser(t *testing.T) {
 	}
 }
 
+// TestMapErrorToResponse tests the MapErrorToResponse function to ensure
+// business logic errors are correctly mapped to the corresponding HTTP
+// response errors and status codes. It verifies that different types of
+// errors are properly translated into appropriate HTTP responses.
 func TestMapErrorToResponse(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -128,6 +134,10 @@ func TestMapErrorToResponse(t *testing.T) {
 	}
 }
 
+// TestGetUser tests the GetUser handler function by verifying its behavior
+// for various input scenarios, including valid user requests, invalid user
+// requests, and empty user requests. It checks if the function returns the
+// expected API Gateway proxy responses with correct status codes and bodies.
 func TestGetUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -178,6 +188,9 @@ func TestGetUser(t *testing.T) {
 	}
 }
 
+// TestGetUsers tests the GetUsers function to ensure it correctly retrieves all users.
+// It verifies that the function returns a response with the expected status code
+// and a body containing a valid list of users.
 func TestGetUsers(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -201,6 +214,9 @@ func TestGetUsers(t *testing.T) {
 	}
 }
 
+// TestCreateUser tests the CreateUser function to ensure it correctly handles user creation requests.
+// It verifies that the function returns appropriate responses for valid user creation,
+// empty user data, and invalid JSON input.
 func TestCreateUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -252,6 +268,9 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
+// TestUpdateUser tests the UpdateUser function to ensure it correctly handles user update requests.
+// It verifies that the function returns appropriate responses for valid user updates,
+// invalid users, empty user data, and invalid JSON input.
 func TestUpdateUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -315,6 +334,10 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
+// TestDeleteUser tests the DeleteUser handler function by verifying its behavior
+// for various input scenarios, including valid user requests, invalid user
+// requests, and empty user requests. It checks if the function returns the
+// expected API Gateway proxy responses with correct status codes and bodies.
 func TestDeleteUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -378,6 +401,9 @@ func TestDeleteUser(t *testing.T) {
 	}
 }
 
+// TestUnhandledHTTPMethod tests the UnhandledHTTPMethod handler function by verifying its behavior
+// for unhandled HTTP methods. It checks if the function returns the expected API Gateway proxy
+// response with the correct status code and error message for methods not supported by the API.
 func TestUnhandledHTTPMethod(t *testing.T) {
 	tests := []struct {
 		name     string
