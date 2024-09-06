@@ -134,10 +134,10 @@ func TestMapErrorToResponse(t *testing.T) {
 	}
 }
 
-// TestGetUser tests the GetUser handler function by verifying its behavior
-// for various input scenarios, including valid user requests, invalid user
-// requests, and empty user requests. It checks if the function returns the
-// expected API Gateway proxy responses with correct status codes and bodies.
+// TestGetUser tests the GetUser function to ensure it correctly handles user get requests.
+// It verifies that the function returns appropriate responses for valid user fetching,
+// empty user data, and invalid JSON input. It checks if the function returns
+// the expected API Gateway proxy responses with correct status codes and bodies.
 func TestGetUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -189,8 +189,8 @@ func TestGetUser(t *testing.T) {
 }
 
 // TestGetUsers tests the GetUsers function to ensure it correctly retrieves all users.
-// It verifies that the function returns a response with the expected status code
-// and a body containing a valid list of users.
+// It verifies that the function returns the expected API Gateway proxy responses
+// with correct status code and body containing a valid list of users.
 func TestGetUsers(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -216,7 +216,8 @@ func TestGetUsers(t *testing.T) {
 
 // TestCreateUser tests the CreateUser function to ensure it correctly handles user creation requests.
 // It verifies that the function returns appropriate responses for valid user creation,
-// empty user data, and invalid JSON input.
+// empty user data, and invalid JSON input. It checks if the function returns
+// the expected API Gateway proxy responses with correct status codes and bodies.
 func TestCreateUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -270,7 +271,8 @@ func TestCreateUser(t *testing.T) {
 
 // TestUpdateUser tests the UpdateUser function to ensure it correctly handles user update requests.
 // It verifies that the function returns appropriate responses for valid user updates,
-// invalid users, empty user data, and invalid JSON input.
+// invalid users, empty user data, and invalid JSON input. It checks if the function returns
+// the expected API Gateway proxy responses with correct status codes and bodies.
 func TestUpdateUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -334,10 +336,11 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
-// TestDeleteUser tests the DeleteUser handler function by verifying its behavior
-// for various input scenarios, including valid user requests, invalid user
-// requests, and empty user requests. It checks if the function returns the
-// expected API Gateway proxy responses with correct status codes and bodies.
+// TestDeleteUser tests the DeleteUser handler function to ensure it correctly handles user
+// delete requests.
+// It verifies that the function returns appropriate responses for valid user deletion,
+// empty user data, and invalid JSON input. It checks if the function returns
+// the expected API Gateway proxy responses with correct status codes and bodies.
 func TestDeleteUser(t *testing.T) {
 	tests := []struct {
 		name     string
