@@ -122,25 +122,3 @@ resource "aws_dynamodb_table" "dynamodb_table" {
 resource "aws_cloudwatch_log_group" "cloud_watch_group" {
   name = "/aws/apigateway/${var.api_gateway_name}"
 }
-
-# resource "aws_apigatewayv2_stage" "api_gateway_stage" {
-#   api_id      = aws_apigatewayv2_api.api_gateway.id
-#   name        = "dev"
-#   auto_deploy = true
-#   access_log_settings {
-#     format          = "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\",\"routeKey\":\"$context.routeKey\", \"status\":\"$context.status\",\"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\" }"
-#     destination_arn = aws_cloudwatch_log_group.cloud_watch_group.arn
-#   }
-# }
-
-# resource "aws_apigatewayv2_integration" "get_integration" {
-#   api_id           = aws_apigatewayv2_api.api_gateway.id
-#   integration_type = "AWS_PROXY"
-#   integration_uri  = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.lambda_function.arn}/invocations"
-# }
-
-# resource "aws_apigatewayv2_route" "get_route" {
-#   api_id    = aws_apigatewayv2_api.api_gateway.id
-#   route_key = "GET /user/{email}"
-#   # target    = "integrations/${aws_apigatewayv2_integration.get_integration.id}"
-# }
