@@ -188,7 +188,7 @@ func UpdateUser(user models.User) error {
 	return nil
 }
 
-// DeleteUser deletes provided item to be deleted from DynamoDB table based on key (email).
+// DeleteUser deletes provided item to be deleted from DynamoDB table based on key (email).1
 func DeleteUser(email string) (*models.User, error) {
 	// Check for user existence.
 	u, err := FetchUser(email)
