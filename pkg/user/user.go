@@ -112,6 +112,7 @@ func FetchUsers() ([]models.User, error) {
 }
 
 // CreateUser creates user in DynamoDB table.
+// It does not return created user - instead the user is taken from the API body request.
 func CreateUser(user models.User) error {
 	// Prepare user item with all attributes.
 	item := map[string]types.AttributeValue{
@@ -161,6 +162,7 @@ func CreateUser(user models.User) error {
 }
 
 // UpdateUser updates existing user in DynamoDB table.
+// It does not return updated user - instead the user is taken from the API body request.
 func UpdateUser(user models.User) error {
 	// Validate user struct if it has required email field.
 	err := validate.Struct(user)
