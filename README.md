@@ -1,6 +1,6 @@
 # Project Description
 
-An API written in Go leveraging the following AWS Services:
+A Serverless API written in Go leveraging the following AWS Services:
 - AWS API Gateway
 - AWS Lambda
 - AWS DynamoDB
