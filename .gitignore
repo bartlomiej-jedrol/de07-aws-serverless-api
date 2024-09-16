@@ -4,3 +4,4 @@ test/
 bootstrap
 terraform/.terraform
 terraform/.terraform.lock.hcl
+Makefile
